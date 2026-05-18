@@ -418,6 +418,18 @@ let loteQueue=[],loteProcessando=false;
 
 function saveLocal(){try{localStorage.setItem('pv5_cfg',JSON.stringify(S))}catch(e){}}
 function loadLocal(){try{const d=localStorage.getItem('pv5_cfg');if(d)S=JSON.parse(d)}catch(e){}}
+async function saveCfgRemoto(){
+  saveLocal();
+  try{
+    await sbFetch('configuracoes',{method:'POST',body:JSON.stringify({chave:'config',valor:JSON.stringify(S)}),headers:{'Prefer':'resolution=merge-duplicates'}});
+  }catch(e){console.error('Erro ao salvar config:',e)}
+}
+async function loadCfgRemoto(){
+  try{
+    const res=await sbFetch('configuracoes?chave=eq.config');
+    if(res&&res.length&&res[0].valor){S=JSON.parse(res[0].valor);saveLocal();}
+  }catch(e){console.error('Erro ao carregar config:',e)}
+}
 function getKey(){try{return localStorage.getItem('pv5_key')||''}catch(e){return''}}
 function saveKey(){const k=document.getElementById('api-key').value.trim();try{localStorage.setItem('pv5_key',k)}catch(e){}document.getElementById('key-status').textContent=k?'✓ Chave salva.':''}
 function getModel(){try{return localStorage.getItem('pv5_model')||'claude-haiku-4-5-20251001'}catch(e){return'claude-haiku-4-5-20251001'}}
@@ -487,9 +499,12 @@ function sair(){
 
 async function initApp(){
   setSyncStatus('loading','Conectando...');
-  try{await sbFetch('registros?limit=1');setSyncStatus('ok','Conectado');}
-  catch(e){setSyncStatus('err','Erro de conexão')}
+  try{
+    await loadCfgRemoto();
+    setSyncStatus('ok','Conectado');
+  }catch(e){setSyncStatus('err','Erro de conexão')}
   populateAll();
+  renderLogin();
   if(isGestor)renderCfg();
 }
 
@@ -780,7 +795,7 @@ function renderCfg(){
   document.getElementById('cfg-vends').innerHTML=S.vendedores.length?S.vendedores.map((v,i)=>`
     <div class="cfg-vendor-row">
       <span class="cfg-vendor-name">${v.nome}</span>
-      <button class="btn btn-red btn-sm" onclick="S.vendedores.splice(${i},1);saveLocal();renderCfg();populateAll();renderLogin()">✕</button>
+      <button class="btn btn-red btn-sm" onclick="S.vendedores.splice(${i},1);saveCfgRemoto();renderCfg();populateAll();renderLogin()">✕</button>
     </div>`).join(''):'<div style="font-size:13px;color:var(--text2);padding:8px 0">Nenhum vendedor.</div>';
   document.getElementById('cfg-cats').innerHTML=S.categorias.map((c,i)=>`<span class="badge ${BADGES[i%BADGES.length]}" style="cursor:pointer;padding:4px 10px" onclick="if(confirm('Remover \\\'${c}\\\'?')){S.categorias.splice(${i},1);saveLocal();renderCfg()}">${c} ×</span>`).join('');
   document.getElementById('cfg-model').value=getModel();
@@ -791,17 +806,17 @@ function addVendedor(){
   const n=document.getElementById('cfg-new-name').value.trim();
   if(!n||S.vendedores.find(v=>v.nome===n))return;
   S.vendedores.push({nome:n});document.getElementById('cfg-new-name').value='';
-  saveLocal();renderCfg();populateAll();renderLogin();
+  saveCfgRemoto();renderCfg();populateAll();renderLogin();
 }
 function addCat(){
   const n=document.getElementById('cfg-new-cat').value.trim();
   if(!n||S.categorias.includes(n))return;
   S.categorias.push(n);document.getElementById('cfg-new-cat').value='';
-  saveLocal();renderCfg();
+  saveCfgRemoto();renderCfg();
 }
 function salvarMeta(){
   S.meta=parseFloat(document.getElementById('cfg-meta').value)||0;
-  saveLocal();alert('Meta salva: '+fmt(S.meta)+' por vendedor/mês.');
+  saveCfgRemoto();alert('Meta salva: '+fmt(S.meta)+' por vendedor/mês.');
 }
 async function delMes(){
   const mes=document.getElementById('del-mes').value;if(!mes)return;
