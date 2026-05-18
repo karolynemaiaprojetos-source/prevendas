@@ -662,7 +662,6 @@ function renderLoteQueue(){
 }
 async function iniciarLote(){
   if(loteProcessando)return;
-  if(!getKey()){alert('Configure a chave de API na aba Config.');return}
   loteProcessando=true;document.getElementById('lote-start-btn').disabled=true;
   const mes=document.getElementById('lote-mes').value||thisMes();
   const vendPad=isGestor?document.getElementById('lote-vend').value:currentUser;
