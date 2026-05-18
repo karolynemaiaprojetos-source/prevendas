@@ -619,16 +619,11 @@ async function confirmar(){
 }
 
 async function readWithAI(b64,mime,vendorHint){
-  const key=ANTHROPIC_KEY;
-  if(!key){console.error('Chave não configurada');return null}
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch('/api/ler',{
       method:'POST',
-      headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:getModel(),max_tokens:300,messages:[{role:'user',content:[
-        {type:'image',source:{type:'base64',media_type:mime,data:b64}},
-        {type:'text',text:'Analise esta pré-venda de ERP e extraia: 1) Nome do vendedor 2) Categoria dos produtos 3) Valor total 4) Número do pedido.\n'+(vendorHint?'Vendedor: '+vendorHint+'\n':'')+'Responda SOMENTE com JSON sem markdown:\n{"vendedor":"","categoria":"","valor":0,"referencia":"","obs":""}'}
-      ]}]})
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({b64,mime,vendorHint,model:getModel()})
     });
     const data=await res.json();
     if(data.error)throw new Error(data.error.message);
