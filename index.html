@@ -180,9 +180,10 @@
       </div>
     </header>
 
-    <!-- TABS VENDEDOR: só Enviar -->
+    <!-- TABS VENDEDOR: Enviar + Lote -->
     <div class="tabs" id="tabs-vendedor">
-      <button class="tab active" onclick="go('upload',this)">📤 Enviar pré-venda</button>
+      <button class="tab active" onclick="go('upload',this)">📤 Enviar</button>
+      <button class="tab" onclick="go('lote',this)">📦 Em lote</button>
     </div>
 
     <!-- TABS GESTOR: tudo -->
@@ -249,7 +250,7 @@
         <div style="font-size:12px;color:var(--text2);margin-bottom:14px">Selecione várias fotos — a IA processa todas automaticamente.</div>
         <div class="row2" style="margin-bottom:14px">
           <div class="field"><label>Mês de referência</label><input type="month" id="lote-mes"></div>
-          <div class="field"><label>Vendedor padrão (opcional)</label><select id="lote-vend"></select></div>
+          <div class="field" id="lote-vend-field"><label>Vendedor padrão (opcional)</label><select id="lote-vend"></select></div>
         </div>
         <div class="multi-drop" id="multi-drop" onclick="document.getElementById('multi-inp').click()" ondragover="mdz(event,'over')" ondragleave="mdz(event,'leave')" ondrop="mdz(event,'drop')">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto 8px;color:var(--text2)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -529,6 +530,7 @@ function go(id,btn){
   document.getElementById('sec-'+id).classList.add('active');
   btn.classList.add('active');
   populateAll();
+  if(id==='lote'){const f=document.getElementById('lote-vend-field');if(f)f.style.display=isGestor?'block':'none';}
   if(id==='painel')renderPainel();
   if(id==='hist')renderHist();
   if(id==='cfg')renderCfg();
@@ -663,7 +665,7 @@ async function iniciarLote(){
   if(!getKey()){alert('Configure a chave de API na aba Config.');return}
   loteProcessando=true;document.getElementById('lote-start-btn').disabled=true;
   const mes=document.getElementById('lote-mes').value||thisMes();
-  const vendPad=document.getElementById('lote-vend').value;
+  const vendPad=isGestor?document.getElementById('lote-vend').value:currentUser;
   for(let i=0;i<loteQueue.length;i++){
     const item=loteQueue[i];item.status='processing';renderLoteQueue();
     try{
